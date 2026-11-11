@@ -1,17 +1,28 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "ytdot-placeholder"
+    "project_number": "882480222086",
+    "project_id": "yt-player-f1351",
+    "storage_bucket": "yt-player-f1351.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:0123456789abcdef012345",
-        "android_client_info": { "package_name": "com.ytdot.app" }
+        "mobilesdk_app_id": "1:882480222086:android:2cbdbb50ad5ece85c3e607",
+        "android_client_info": {
+          "package_name": "com.ytdot.app"
+        }
       },
       "oauth_client": [],
-      "api_key": [ { "current_key": "AIzaSyPLACEHOLDER-REPLACE-WITH-REAL-KEY000" } ],
-      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjASBnIoBsFmzGm9JCRJa2XNiwe4_fY2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"
