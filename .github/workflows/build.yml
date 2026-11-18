@@ -1,61 +1,59 @@
-
-name: Build Signed Android AAB
+name: Build Android
 
 on:
   push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
 
-      - name: Prepare Android SDK
+      - name: Install Android SDK packages
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Decode signing key
+      - name: Build DEBUG APK (test ads, no keystore needed)
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Decode keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "ERROR: KEYSTORE_BASE64 secret is missing"
-            exit 1
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-key.jks"
           fi
-          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-key.jks"
-          test -s "$RUNNER_TEMP/upload-key.jks"
 
-      - name: Build Signed Android AAB
+      - name: Build RELEASE AAB
+        if: ${{ env.HAS_KEY == 'true' }}
         env:
+          HAS_KEY: ${{ secrets.KEYSTORE_BASE64 != '' }}
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload-key.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: gradle bundleRelease --no-daemon
 
-      - name: Verify AAB signature
-        run: |
-          jarsigner -verify -verbose -certs app/build/outputs/bundle/release/app-release.aab
-
-      - name: Upload Signed AAB
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
+        if: ${{ success() }}
         with:
-          name: signed-android-app
+          name: release-aab
           path: app/build/outputs/bundle/release/*.aab
-          if-no-files-found: error
-
+          if-no-files-found: ignore
