@@ -111,7 +111,7 @@ public class MainActivity extends Activity {
 
     private void setupConsentThenAds() {
         consent = UserMessagingPlatform.getConsentInformation(this);
-        ConsentRequestParameters params = ConsentRequestParameters.builder().build();
+        ConsentRequestParameters params = new ConsentRequestParameters.Builder().build();
 
         consent.requestConsentInfoUpdate(this, params,
             () -> UserMessagingPlatform.loadAndShowConsentFormIfRequired(this, err -> {
