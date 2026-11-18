@@ -101,7 +101,7 @@ public class MainActivity extends Activity {
         web.setBackgroundColor(Color.parseColor("#0F0F14"));
         
         // CRITICAL FIX: Disable hardware acceleration on WebView to prevent black screen crashes on MIUI/some Android versions [[34]][[35]]
-        web.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        web.setLayerType(View.LAYER_TYPE_NONE, null);
 
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
