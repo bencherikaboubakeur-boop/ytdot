@@ -155,7 +155,7 @@ public class MainActivity extends Activity {
                     if (consent.canRequestAds()) initAds();
                 }),
                 err -> { 
-                    Log.w(TAG, "Consent update failed", err);
+                    Log.w(TAG, "Consent update failed: " + err.getMessage());
                     if (consent.canRequestAds()) initAds(); 
                 });
 
