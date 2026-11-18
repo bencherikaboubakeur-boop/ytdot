@@ -32,6 +32,25 @@ public class MainActivity extends Activity {
     private static final String HOME = "https://m.youtube.com/";
     private static final int REQ_LIBRARY = 10;
 
+    // ===== Background playback JavaScript =====
+    private static final String JS_PATCH =
+        "(function(){if(window.__bgPatched)return;window.__bgPatched=true;window.__bgActive=false;" +
+        "Object.defineProperty(document,'hidden',{get:function(){return false;},configurable:true});" +
+        "Object.defineProperty(document,'visibilityState',{get:function(){return 'visible';},configurable:true});" +
+        "Object.defineProperty(document,'webkitHidden',{get:function(){return false;},configurable:true});" +
+        "document.hasFocus=function(){return true;};" +
+        "window.addEventListener('visibilitychange',function(e){e.stopImmediatePropagation();},true);" +
+        "window.addEventListener('pagehide',function(e){e.stopImmediatePropagation();},true);" +
+        "window.addEventListener('blur',function(e){e.stopImmediatePropagation();},true);" +
+        "document.addEventListener('pause',function(e){var t=e.target;" +
+        "if(window.__bgActive&&t&&t.tagName==='VIDEO'){try{t.play();}catch(x){}}},true);})();";
+    private static final String JS_IS_PLAYING =
+        "(function(){var v=document.querySelector('video');return !!(v&&!v.paused&&!v.ended&&v.currentTime>0);})()";
+    private static final String JS_BG_ON  = "window.__bgActive=true;";
+    private static final String JS_BG_OFF = "window.__bgActive=false;";
+    private static final String JS_PAUSE  = "(function(){var v=document.querySelector('video');if(v)v.pause();})()";
+    // ===========================================
+
     private WebView web;
     private FrameLayout adSlot;
     private View customView;
@@ -45,7 +64,6 @@ public class MainActivity extends Activity {
         super.onCreate(b);
         setContentView(R.layout.activity_main);
 
-        // Safe Firebase init
         try {
             analytics = FirebaseAnalytics.getInstance(this);
         } catch (Exception e) {
@@ -55,10 +73,16 @@ public class MainActivity extends Activity {
         adSlot = findViewById(R.id.adSlot);
         web = findViewById(R.id.web);
 
+        // Notification "Stop" button -> pause video + kill service
+        PlaybackService.onStopRequested = () -> {
+            web.evaluateJavascript(JS_PAUSE, null);
+            stopPlaybackService();
+        };
+
         findViewById(R.id.btnRefresh).setOnClickListener(v -> {
             if (web != null) web.reload();
         });
-        
+
         findViewById(R.id.btnSave).setOnClickListener(v -> {
             try {
                 Library.add(this, web.getTitle(), web.getUrl());
@@ -68,7 +92,7 @@ public class MainActivity extends Activity {
                 Log.e(TAG, "Save failed", e);
             }
         });
-        
+
         findViewById(R.id.btnLibrary).setOnClickListener(v -> {
             try {
                 startActivityForResult(new Intent(this, LibraryActivity.class), REQ_LIBRARY);
@@ -89,7 +113,7 @@ public class MainActivity extends Activity {
 
     private void setupWebView() {
         if (web == null) return;
-        
+
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -99,15 +123,17 @@ public class MainActivity extends Activity {
         s.setSupportZoom(false);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         web.setBackgroundColor(Color.parseColor("#0F0F14"));
-        
-        // CRITICAL FIX: Disable hardware acceleration on WebView to prevent black screen crashes on MIUI/some Android versions [[34]][[35]]
-        web.setLayerType(View.LAYER_TYPE_NONE, null);
+        web.setLayerType(View.LAYER_TYPE_NONE, null); // hardware acceleration ON for video
 
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
         cm.setAcceptThirdPartyCookies(web, true);
 
         web.setWebViewClient(new WebViewClient() {
+            @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                view.evaluateJavascript(JS_PATCH, null); // patch before YouTube's player loads
+            }
+
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
                 String host = r.getUrl().getHost();
                 if (host != null && (host.endsWith("youtube.com") || host.endsWith("youtu.be"))) {
@@ -117,11 +143,9 @@ public class MainActivity extends Activity {
                 catch (Exception ignored) {}
                 return true;
             }
-            
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+
+            @Override public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 Log.e(TAG, "WebView error: " + description);
-                // Don't crash on network errors
             }
         });
 
@@ -144,25 +168,51 @@ public class MainActivity extends Activity {
         web.setWebChromeClient(chrome);
     }
 
+    // ===== Background playback lifecycle =====
+    @Override protected void onStop() {
+        super.onStop();
+        if (web == null) return;
+        web.evaluateJavascript(JS_IS_PLAYING, value -> {
+            if ("true".equals(value)) {
+                web.evaluateJavascript(JS_BG_ON, null);
+                startPlaybackService();
+            }
+        });
+    }
+
+    private void startPlaybackService() {
+        try {
+            Intent i = new Intent(this, PlaybackService.class);
+            if (Build.VERSION.SDK_INT >= 26) startForegroundService(i);
+            else startService(i);
+        } catch (Exception e) {
+            Log.w(TAG, "foreground service start failed", e);
+        }
+    }
+
+    private void stopPlaybackService() {
+        try { stopService(new Intent(this, PlaybackService.class)); }
+        catch (Exception ignored) {}
+    }
+    // ==========================================
+
     private void setupConsentThenAds() {
         try {
             consent = UserMessagingPlatform.getConsentInformation(this);
-            // FIXED: Use correct Builder API for UMP v4.0.0 [[29]][[33]]
             ConsentRequestParameters params = new ConsentRequestParameters.Builder().build();
 
             consent.requestConsentInfoUpdate(this, params,
                 () -> UserMessagingPlatform.loadAndShowConsentFormIfRequired(this, err -> {
                     if (consent.canRequestAds()) initAds();
                 }),
-                err -> { 
+                err -> {
                     Log.w(TAG, "Consent update failed: " + err.getMessage());
-                    if (consent.canRequestAds()) initAds(); 
+                    if (consent.canRequestAds()) initAds();
                 });
 
             if (consent.canRequestAds()) initAds();
         } catch (Exception e) {
             Log.e(TAG, "Consent/Ads setup failed", e);
-            // Try to init ads anyway without consent flow
             initAds();
         }
     }
@@ -210,6 +260,8 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         Ads.resume();
+        if (web != null) web.evaluateJavascript(JS_BG_OFF, null);
+        stopPlaybackService(); // back in foreground -> no wake lock needed
         if (adsInit.get() && consent != null && consent.canRequestAds()) {
             Ads.maybeShow(this, adSlot);
         }
