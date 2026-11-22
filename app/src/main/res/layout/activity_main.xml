@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="@color/text"
+            android:textSize="22sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/tagline"
+            android:textColor="@color/muted"
+            android:textSize="13sp"/>
+
+        <EditText
+            android:id="@+id/search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_input"
+            android:hint="@string/search_hint"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:maxLines="1"
+            android:padding="12dp"
+            android:textColor="@color/text"
+            android:textColorHint="@color/muted"
+            android:textSize="14sp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/btnFilter"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/filter"/>
+
+            <Button android:id="@+id/btnSort"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/sort"/>
+
+            <Button android:id="@+id/btnTools"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/tools"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/adSlot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="88dp"/>
+
+        <TextView
+            android:id="@+id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:padding="32dp"
+            android:text="@string/empty_state"
+            android:textColor="@color/muted"
+            android:textSize="15sp"
+            android:visibility="gone"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="@string/add"
+            app:srcCompat="@android:drawable/ic_input_add"/>
+    </FrameLayout>
+</LinearLayout>
