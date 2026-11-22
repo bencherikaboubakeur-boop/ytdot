@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,35 +27,32 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Build DEBUG APK (test ads, no keystore needed)
+      - name: Build debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
-          name: test-apk
+          name: debug-apk
           path: app/build/outputs/apk/debug/*.apk
 
       - name: Decode keystore
+        if: env.HAS_KEY == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-key.jks"
-          fi
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-key.jks"
 
       - name: Build RELEASE AAB
-        if: ${{ env.HAS_KEY == 'true' }}
+        if: env.HAS_KEY == 'true'
         env:
-          HAS_KEY: ${{ secrets.KEYSTORE_BASE64 != '' }}
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload-key.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle bundleRelease --no-daemon
+        run: gradle bundleRelease --no-daemon --stacktrace
 
       - uses: actions/upload-artifact@v4
-        if: ${{ success() }}
+        if: env.HAS_KEY == 'true'
         with:
           name: release-aab
           path: app/build/outputs/bundle/release/*.aab
-          if-no-files-found: ignore
+          if-no-files-found: error
