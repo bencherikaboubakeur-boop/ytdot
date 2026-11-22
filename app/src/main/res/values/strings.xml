@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">Video Finder</string>
+    <string name="tagline">Save links · tag · take notes · watch later</string>
+    <string name="search_hint">Search title, tag or note</string>
+    <string name="filter">Filter</string>
+    <string name="sort">Sort</string>
+    <string name="tools">Tools</string>
+    <string name="add">Add link</string>
+    <string name="more">More actions</string>
+    <string name="empty_state">Nothing saved yet.\nTap + to add a link, or share a video from the YouTube app.</string>
+
+    <string name="all_tags">All tags</string>
+    <string name="hide_watched">Hide watched</string>
+    <string name="show_watched">Show watched</string>
+    <string name="sort_newest">Newest first</string>
+    <string name="sort_title">Title A–Z</string>
+    <string name="sort_unwatched">Unwatched first</string>
+    <string name="export_json">Export library</string>
+    <string name="import_json">Import library</string>
+
+    <string name="open_link">Open in YouTube</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="watched">Watched</string>
+    <string name="mark_watched">Mark watched</string>
+    <string name="mark_unwatched">Mark unwatched</string>
+
+    <string name="link_label">VIDEO LINK</string>
+    <string name="link_hint">https://www.youtube.com/watch?v=…</string>
+    <string name="title_label">TITLE</string>
+    <string name="title_hint">Give it a name</string>
+    <string name="tag_label">TAG</string>
+    <string name="tag_hint">e.g. music, study, recipes</string>
+    <string name="note_label">NOTE</string>
+    <string name="note_hint">Why you saved this</string>
+
+    <string name="saved">Saved</string>
+    <string name="deleted">Deleted</string>
+    <string name="already_saved">That link is already in your library</string>
+    <string name="invalid_link">Only https YouTube links are supported</string>
+    <string name="no_browser">No app available to open this link</string>
+    <string name="exported">Library exported</string>
+    <string name="export_failed">Export failed</string>
+    <string name="imported">Imported %1$d links</string>
+    <string name="import_failed">Import failed</string>
+    <string name="channel_news">Announcements</string>
+</resources>
